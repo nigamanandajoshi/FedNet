@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017
+      - REDIS_HOST=redis
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+      - ../saved_models:/app/saved_models
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - medchain-network
+
+  dashboard:
+    build:
+      context: ../dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000
+    networks:
+      - medchain-network
+
+  mongodb:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - medchain-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - medchain-network
+
+volumes:
+  mongodb-data:
+
+
+networks:
+  medchain-network:
+    driver: bridge

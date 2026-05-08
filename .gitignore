@@ -1,0 +1,135 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+conda/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.gemini/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Data
+data/hospital_*/
+data/test/
+*.csv
+*.pkl
+*.h5
+*.hdf5
+*.parquet
+
+# Images
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.tiff
+!dashboard/public/*.png
+
+# Models
+*.pth
+*.pt
+*.ckpt
+*.pb
+*.onnx
+saved_models/
+checkpoints/
+
+# Logs
+logs/
+*.log
+wandb/
+runs/
+tensorboard/
+
+# Azure
+.azure/
+azureml/
+*.azureml
+
+# Environment
+.env
+.env.local
+.env.*.local
+config/secrets.py
+config/azure_credentials.json
+
+# Blockchain
+blockchain_data/
+*.db
+*.sqlite
+# Hardhat build artifacts & dynamic config — never commit these
+blockchain_eth/artifacts/
+blockchain_eth/cache/
+blockchain_eth/ignition/deployments/
+contract_addresses.json
+
+# Generated Runtime Artifacts
+artifacts/*.json
+blockchain_ledger.json
+attestations/
+
+# API
+api/*.db
+
+# Dashboard
+dashboard/node_modules/
+dashboard/build/
+dashboard/dist/
+dashboard/.env
+dashboard/package-lock.json
+dashboard/yarn.lock
+
+# Docker
+.dockerignore
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary
+tmp/
+temp/
+*.tmp
+*.cache
+
+# Tests
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
