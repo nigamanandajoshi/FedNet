@@ -14,10 +14,13 @@ This artifact is the basis for verifiable training history and regulatory audit 
 import json
 import hashlib
 import hmac
+import logging
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, asdict
 from pathlib import Path
+
+logger = logging.getLogger("fednet.audit_artifacts")
 
 
 @dataclass
@@ -125,7 +128,7 @@ class AuditArtifactGenerator:
         # Create artifact (without signature initially)
         artifact = AuditArtifact(
             round_id=round_id,
-            timestamp=datetime.now(timezone.utc).isoformat() + "Z",
+            timestamp=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
             participants=sorted(hashed_participants),
             gradient_hash=gradient_hash,
             model_version=model_version,
@@ -222,6 +225,10 @@ def create_artifact_generator(secret_key: Optional[str] = None) -> AuditArtifact
         Configured AuditArtifactGenerator instance
     """
     if secret_key is None:
+        logger.warning(
+            "Using default deterministic HMAC key. "
+            "Set HMAC_SIGNING_KEY in .env for production use."
+        )
         secret_key = hashlib.sha256(b"fednet-aggregator-key").hexdigest()
 
     return AuditArtifactGenerator(secret_key)

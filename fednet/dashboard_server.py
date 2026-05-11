@@ -3,11 +3,14 @@ FedNet Dashboard Server
 Real-time monitoring of audit artifacts, Solana attestations, and inference monetization.
 """
 
+import logging
 from flask import Flask, render_template_string, jsonify
 from pathlib import Path
 import json
 from datetime import datetime
 from decimal import Decimal
+
+logger = logging.getLogger("fednet.dashboard")
 
 
 class FedNetDashboard:
@@ -442,7 +445,7 @@ class FedNetDashboard:
 
     def run(self, debug: bool = False):
         """Run the dashboard server."""
-        print(f"\nFedNet Dashboard running on http://localhost:{self.port}")
+        logger.info("FedNet Dashboard running on http://localhost:%d", self.port)
         self.app.run(host="0.0.0.0", port=self.port, debug=debug)
 
 

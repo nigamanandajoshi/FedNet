@@ -7,13 +7,19 @@ Researchers and AI agents pay per query via Solana USDC transfers.
 
 import torch
 import json
-from decimal import Decimal
+import logging
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Dict, Any, Tuple, Optional
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from fednet.x402_payment import create_payment_processor, PaymentProof
+
+logger = logging.getLogger("fednet.inference_server")
+
+# Maximum input size to prevent abuse (number of elements)
+MAX_INPUT_SIZE = 10_000
 
 
 class X402InferenceServer:
@@ -27,6 +33,7 @@ class X402InferenceServer:
         model: torch.nn.Module,
         model_id: str = "fednet_model_v1",
         price_per_inference: Decimal = Decimal("0.05"),
+        use_mock: bool = True,
         debug: bool = False,
     ):
         """
@@ -36,6 +43,7 @@ class X402InferenceServer:
             model: Trained PyTorch model
             model_id: Model identifier
             price_per_inference: Price in USDC per inference
+            use_mock: Use mock payment processor (set False for production)
             debug: Enable Flask debug mode
         """
         self.model = model
@@ -46,13 +54,17 @@ class X402InferenceServer:
         self.app = Flask(__name__)
         CORS(self.app)
         self.app.config["DEBUG"] = debug
+        self.app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024  # 1MB max payload
 
         # Initialize payment processor
         self.payment_processor = create_payment_processor(
             model_id=model_id,
-            use_mock=True,  # MVP uses mock payments
+            use_mock=use_mock,
             price_per_inference=price_per_inference,
         )
+
+        if use_mock:
+            logger.warning("Using mock payment processor — not suitable for production")
 
         # Track inference statistics
         self.inference_count = 0
@@ -60,6 +72,11 @@ class X402InferenceServer:
 
         # Register routes
         self._register_routes()
+
+        logger.info(
+            "Inference server initialized: model=%s price=%s mock=%s",
+            model_id, price_per_inference, use_mock,
+        )
 
     def _register_routes(self):
         """Register Flask routes."""
@@ -114,8 +131,12 @@ class X402InferenceServer:
 
                 # Verify payment
                 try:
-                    amount = Decimal(payment_amount_str)
-                except:
+                    amount = Decimal(str(payment_amount_str))
+                except (InvalidOperation, ValueError, TypeError):
+                    logger.warning(
+                        "Invalid payment amount from %s: %s",
+                        payer_wallet, payment_amount_str,
+                    )
                     return self._x402_payment_required()
 
                 if not self.payment_processor.verify_payment(
@@ -123,6 +144,10 @@ class X402InferenceServer:
                     payer_wallet,
                     amount,
                 ):
+                    logger.info(
+                        "Payment verification failed: tx=%s payer=%s amount=%s",
+                        payment_tx_id, payer_wallet, amount,
+                    )
                     return self._x402_payment_required()
 
                 # Record payment
@@ -138,12 +163,21 @@ class X402InferenceServer:
                 if input_data is None:
                     return jsonify({"error": "Missing 'input' field"}), 400
 
+                # Validate input size
+                if isinstance(input_data, list) and len(input_data) > MAX_INPUT_SIZE:
+                    return jsonify({"error": f"Input exceeds maximum size of {MAX_INPUT_SIZE}"}), 400
+
                 try:
                     result = self._run_inference(input_data)
 
                     # Update statistics
                     self.inference_count += 1
                     self.total_revenue += amount
+
+                    logger.info(
+                        "Inference #%d completed: tx=%s payer=%s amount=%s",
+                        self.inference_count, payment_tx_id, payer_wallet, amount,
+                    )
 
                     return jsonify({
                         "result": result,
@@ -154,9 +188,11 @@ class X402InferenceServer:
                     }), 200
 
                 except Exception as e:
+                    logger.error("Inference failed: %s", e, exc_info=True)
                     return jsonify({"error": f"Inference failed: {str(e)}"}), 500
 
             except Exception as e:
+                logger.error("Request processing error: %s", e, exc_info=True)
                 return jsonify({"error": str(e)}), 400
 
         @self.app.route("/payments/history", methods=["GET"])
@@ -226,14 +262,10 @@ class X402InferenceServer:
 
     def run(self, host: str = "127.0.0.1", port: int = 5000, debug: bool = False):
         """Run the Flask server."""
-        print(f"\n{'='*80}")
-        print("FedNet x402-Gated Inference Server")
-        print(f"{'='*80}")
-        print(f"Model: {self.model_id}")
-        print(f"Price per inference: ${self.payment_processor.price_per_inference} USDC")
-        print(f"Server running on http://{host}:{port}")
-        print(f"{'='*80}\n")
-
+        logger.info(
+            "Starting inference server: model=%s price=$%s host=%s:%d",
+            self.model_id, self.payment_processor.price_per_inference, host, port,
+        )
         self.app.run(host=host, port=port, debug=debug)
 
     def get_app(self):

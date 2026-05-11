@@ -87,14 +87,20 @@ class HybridModel(nn.Module):
         """
         super(HybridModel, self).__init__()
         
-        # CBC branch
-        self.cbc_branch = CBCModel(
-            input_dim=cbc_input_dim,
-            hidden_dims=cbc_hidden_dims,
-            num_classes=128  # Output features for fusion
-        )
-        # Remove last layer to get features
-        self.cbc_branch = nn.Sequential(*list(self.cbc_branch.model.children())[:-1])
+        # CBC branch — dedicated feature extractor outputting 128 dims
+        cbc_layers = []
+        prev_dim = cbc_input_dim
+        for hidden_dim in cbc_hidden_dims:
+            cbc_layers.extend([
+                nn.Linear(prev_dim, hidden_dim),
+                nn.BatchNorm1d(hidden_dim),
+                nn.ReLU(),
+                nn.Dropout(0.3),
+            ])
+            prev_dim = hidden_dim
+        cbc_layers.append(nn.Linear(prev_dim, 128))
+        cbc_layers.append(nn.ReLU())
+        self.cbc_branch = nn.Sequential(*cbc_layers)
         
         # Image branch
         self.image_branch = models.resnet18(pretrained=pretrained)

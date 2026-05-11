@@ -25,12 +25,17 @@ syft>=0.8.0
 web3>=6.11.0
 eth-hash>=0.5.2
 eth-utils>=2.3.0
+eth-account
 
 # API
 flask>=3.0.0
 flask-cors>=4.0.0
 flask-restful>=0.3.10
+flask-limiter>=3.5.0
 pydantic>=2.4.0
+
+# Production Server
+gunicorn>=21.2.0
 
 # Database
 pymongo>=4.5.0
@@ -52,7 +57,3 @@ wandb>=0.15.0
 pytest>=7.4.0
 pytest-cov>=4.1.0
 pytest-asyncio>=0.21.0
-
-# Blockchain Integration
-web3
-eth-account

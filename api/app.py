@@ -12,9 +12,26 @@ logger = setup_logging(log_level=settings.log_level, log_dir=settings.logs_dir)
 # Create Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = settings.secret_key
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max request size
 
 # Enable CORS
 CORS(app)
+
+# Rate limiting
+try:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+
+    limiter = Limiter(
+        app=app,
+        key_func=get_remote_address,
+        default_limits=["200 per minute", "5000 per hour"],
+        storage_uri="memory://",
+    )
+    logger.info("Rate limiting enabled: 200/min, 5000/hr")
+except ImportError:
+    limiter = None
+    logger.warning("flask-limiter not installed — rate limiting disabled")
 
 # Register blueprints
 app.register_blueprint(api_bp, url_prefix='/api')
@@ -26,7 +43,7 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'service': 'fednet-api',
-        'version': '0.1.0'
+        'version': '1.0.0'
     })
 
 
@@ -41,6 +58,12 @@ def not_found(error):
 def internal_error(error):
     """Handle 500 errors."""
     return jsonify({'error': 'Internal server error'}), 500
+
+
+@app.errorhandler(429)
+def ratelimit_handler(error):
+    """Handle rate limit exceeded."""
+    return jsonify({'error': 'Rate limit exceeded. Try again later.'}), 429
 
 
 def main():

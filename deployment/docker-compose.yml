@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   api:
     build:
@@ -8,28 +6,88 @@ services:
     ports:
       - "5000:5000"
     environment:
+      - ENVIRONMENT=production
       - MONGODB_URI=mongodb://mongodb:27017
       - REDIS_HOST=redis
+      - LOG_LEVEL=INFO
+      - API_DEBUG=false
+    env_file:
+      - ../.env
     volumes:
       - ../data:/app/data
       - ../logs:/app/logs
       - ../saved_models:/app/saved_models
+      - ../artifacts:/app/artifacts
     depends_on:
-      - mongodb
-      - redis
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     networks:
-      - medchain-network
+      - fednet-network
+
+  inference:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      - ENVIRONMENT=production
+      - LOAD_INFERENCE_APP=true
+      - LOG_LEVEL=INFO
+    env_file:
+      - ../.env
+    command: >
+      gunicorn wsgi:inference_app
+      --bind 0.0.0.0:5001
+      --workers 2
+      --timeout 120
+      --access-logfile -
+      --error-logfile -
+    volumes:
+      - ../saved_models:/app/saved_models
+      - ../artifacts:/app/artifacts
+      - ../logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - fednet-network
 
   dashboard:
     build:
-      context: ../dashboard
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: deployment/Dockerfile
     ports:
-      - "3000:3000"
+      - "5002:5002"
     environment:
-      - REACT_APP_API_URL=http://localhost:5000
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+    command: >
+      python -c "
+      from config.logging_config import setup_logging;
+      setup_logging(log_level='INFO');
+      from fednet.dashboard_server import create_dashboard;
+      create_dashboard(port=5002).run()
+      "
+    volumes:
+      - ../artifacts:/app/artifacts
+      - ../attestations:/app/attestations
+    depends_on:
+      api:
+        condition: service_healthy
     networks:
-      - medchain-network
+      - fednet-network
 
   mongodb:
     image: mongo:6
@@ -37,20 +95,31 @@ services:
       - "27017:27017"
     volumes:
       - mongodb-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
-      - medchain-network
+      - fednet-network
 
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
-      - medchain-network
+      - fednet-network
 
 volumes:
   mongodb-data:
 
 
 networks:
-  medchain-network:
+  fednet-network:
     driver: bridge

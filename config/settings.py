@@ -16,6 +16,9 @@ PROJECT_ROOT = Path(__file__).parent.parent
 class Settings:
     """Application settings."""
     
+    # Environment
+    environment: str = os.getenv("ENVIRONMENT", "development")  # development, production
+    
     # Project paths
     project_root: Path = PROJECT_ROOT
     data_dir: Path = PROJECT_ROOT / "data"
@@ -51,7 +54,7 @@ class Settings:
     # API settings
     api_host: str = os.getenv("API_HOST", "0.0.0.0")
     api_port: int = int(os.getenv("API_PORT", "5000"))
-    api_debug: bool = os.getenv("API_DEBUG", "true").lower() == "true"
+    api_debug: bool = os.getenv("API_DEBUG", "false").lower() == "true"
     
     # Database settings
     mongodb_uri: str = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
@@ -69,11 +72,25 @@ class Settings:
     secret_key: str = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
     jwt_secret_key: str = os.getenv("JWT_SECRET_KEY", "jwt-secret-key-change-in-production")
     
+    @property
+    def is_production(self) -> bool:
+        """Check if running in production mode."""
+        return self.environment.lower() == "production"
+    
     def __post_init__(self):
-        """Create necessary directories."""
+        """Create necessary directories and validate production config."""
         self.models_dir.mkdir(exist_ok=True, parents=True)
         self.logs_dir.mkdir(exist_ok=True, parents=True)
         self.checkpoints_dir.mkdir(exist_ok=True, parents=True)
+        
+        # Fail loudly if dev secrets are used in production
+        if self.is_production:
+            _insecure = {"dev-secret-key-change-in-production", "jwt-secret-key-change-in-production"}
+            if self.secret_key in _insecure or self.jwt_secret_key in _insecure:
+                raise RuntimeError(
+                    "FATAL: Default development secrets detected in production. "
+                    "Set SECRET_KEY and JWT_SECRET_KEY environment variables."
+                )
 
 
 # Global settings instance

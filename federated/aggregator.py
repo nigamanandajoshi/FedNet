@@ -45,12 +45,20 @@ class FederatedAggregator:
         for key in client_weights[0].keys():
             aggregated_weights[key] = torch.zeros_like(client_weights[0][key])
         
+        # Track original dtypes for casting back after averaging
+        original_dtypes = {key: client_weights[0][key].dtype for key in client_weights[0].keys()}
+
         # Weighted average
         for client_weight, data_size in zip(client_weights, client_data_sizes):
             weight = data_size / total_size
             
             for key in aggregated_weights.keys():
-                aggregated_weights[key] += client_weight[key] * weight
+                aggregated_weights[key] = aggregated_weights[key].float() + client_weight[key].float() * weight
+
+        # Cast back to original dtypes (e.g. Long for BatchNorm num_batches_tracked)
+        for key in aggregated_weights.keys():
+            if original_dtypes[key] != aggregated_weights[key].dtype:
+                aggregated_weights[key] = aggregated_weights[key].to(original_dtypes[key])
         
         logger.info(f"Aggregated {len(client_weights)} client models using FedAvg")
         
@@ -138,7 +146,7 @@ class FederatedAggregator:
         diff_norm = 0.0
         
         for key in old_weights.keys():
-            diff = new_weights[key] - old_weights[key]
+            diff = new_weights[key].float() - old_weights[key].float()
             diff_norm += torch.norm(diff).item() ** 2
         
         diff_norm = np.sqrt(diff_norm)

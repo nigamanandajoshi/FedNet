@@ -6,9 +6,13 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     git \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
+# Create non-root user for security
+RUN groupadd -r fednet && useradd -r -g fednet -d /app -s /sbin/nologin fednet
+
+# Copy requirements first (Docker layer caching)
 COPY requirements.txt .
 
 # Install Python dependencies
@@ -20,8 +24,24 @@ COPY . .
 # Install package
 RUN pip install -e .
 
-# Expose API port
-EXPOSE 5000
+# Create necessary directories
+RUN mkdir -p logs artifacts saved_models && \
+    chown -R fednet:fednet /app
 
-# Run API server
-CMD ["python", "api/app.py"]
+# Switch to non-root user
+USER fednet
+
+# Expose API and dashboard ports
+EXPOSE 5000 5001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
+
+# Run with gunicorn (production WSGI server)
+CMD ["gunicorn", "wsgi:app", \
+     "--bind", "0.0.0.0:5000", \
+     "--workers", "4", \
+     "--timeout", "120", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-"]
