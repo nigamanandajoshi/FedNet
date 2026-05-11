@@ -244,14 +244,31 @@ pytest tests/ -v
 
 ## For Production
 
-When moving to production:
+FedNet is production-ready. To deploy:
 
-1. Replace `MockSolanaAttestationClient` with real client
-2. Configure Solana mainnet RPC endpoint
-3. Set up HTTPS for Flask server
-4. Implement Solana wallet for USDC payments
-5. Configure real Solana devnet/mainnet addresses
-6. Set up actual node payout distribution
+```bash
+# 1. Configure environment
+cp .env.example .env
+# Edit .env:
+#   ENVIRONMENT=production
+#   SOLANA_NETWORK=mainnet-beta   (or keep devnet for demo)
+#   RECEIVER_WALLET=<your-solana-wallet>
+#   SECRET_KEY=<strong-random-key>
+#   HMAC_SIGNING_KEY=<strong-random-key>
+
+# 2. Deploy with gunicorn
+gunicorn wsgi:app --bind 0.0.0.0:5000 --workers 4
+
+# 3. Or deploy with Docker
+cd deployment && docker compose up --build -d
+```
+
+Features enabled in production:
+- Real Solana RPC payment verification (tx confirmation + USDC balance checks)
+- Rate limiting (200 req/min)
+- Non-root Docker containers with health checks
+- Replay protection (duplicate tx_id rejection)
+- Production secret validation (fails loudly if dev secrets are used)
 
 ## Questions?
 

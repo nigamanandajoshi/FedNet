@@ -302,11 +302,15 @@ python -c "from fednet.dashboard_server import create_dashboard; create_dashboar
 
 ### Production
 
-1. Replace `MockSolanaAttestationClient` with real `SolanaAttestationClient`
-2. Configure real Solana mainnet RPC endpoint
-3. Deploy Flask inference server behind HTTPS reverse proxy
-4. Set up Solana wallet for receiving USDC payments
-5. Configure node payout distribution logic
+FedNet is production-ready. To deploy:
+
+1. Copy `.env.example` to `.env` and set `ENVIRONMENT=production`
+2. Set `SECRET_KEY` and `JWT_SECRET_KEY` to strong, unique values
+3. Set `SOLANA_NETWORK=mainnet-beta` (or keep `devnet` for demo)
+4. Set `RECEIVER_WALLET` to your Solana wallet address
+5. Set `HMAC_SIGNING_KEY` to a strong key for artifact signing
+6. Deploy with gunicorn: `gunicorn wsgi:app --bind 0.0.0.0:5000 --workers 4`
+7. Or use Docker: `cd deployment && docker compose up --build -d`
 
 ---
 
