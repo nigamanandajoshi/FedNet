@@ -1,17 +1,25 @@
 """
 Layer 2: Solana State Compression for Tamper-Proof Attestation
 
-Anchors audit artifact hashes on Solana devnet for permanent, verifiable proof
+Anchors audit artifact hashes on Solana for permanent, verifiable proof
 that a training round occurred and data integrity.
 
 Uses Solana's memo program to store attestation data at minimal cost (~$0.000005 per tx).
+
+Network is configurable via SOLANA_NETWORK env var:
+  - devnet (default): free, for development and testing
+  - mainnet-beta: production, requires SOL for tx fees (~$0.000005 per tx)
 """
 
+import os
 import json
 import hashlib
+import logging
 from typing import Optional, Dict, Any
 from pathlib import Path
 from datetime import datetime, timezone
+
+logger = logging.getLogger("fednet.solana_attestation")
 
 try:
     from solders.keypair import Keypair
@@ -27,6 +35,32 @@ except ImportError:
     SOLANA_AVAILABLE = False
 
 
+# ── Network helpers ───────────────────────────────────────────────────────────
+
+RPC_URLS = {
+    "devnet": "https://api.devnet.solana.com",
+    "mainnet-beta": "https://api.mainnet-beta.solana.com",
+    "testnet": "https://api.testnet.solana.com",
+}
+
+
+def _get_rpc_url(network: str, rpc_url: Optional[str] = None) -> str:
+    """Resolve Solana RPC URL from network name or explicit URL."""
+    if rpc_url:
+        return rpc_url
+    return RPC_URLS.get(network, RPC_URLS["devnet"])
+
+
+def _get_explorer_url(tx_id: str, network: str) -> str:
+    """Build Solana explorer URL with correct cluster param."""
+    base = f"https://explorer.solana.com/tx/{tx_id}"
+    if network == "mainnet-beta":
+        return base  # mainnet doesn't use ?cluster=
+    return f"{base}?cluster={network}"
+
+
+# ── Production client ─────────────────────────────────────────────────────────
+
 class SolanaAttestationClient:
     """
     Client for anchoring audit artifacts on Solana via state compression.
@@ -37,21 +71,24 @@ class SolanaAttestationClient:
 
     def __init__(
         self,
-        rpc_url: str = "https://api.devnet.solana.com",
+        rpc_url: Optional[str] = None,
         payer_secret_key: Optional[str] = None,
+        network: str = "devnet",
     ):
         """
         Initialize Solana attestation client.
 
         Args:
-            rpc_url: Solana RPC endpoint URL
-            payer_secret_key: Base58 encoded secret key for paying transactions
+            rpc_url: Solana RPC endpoint URL (auto-derived from network if not set)
+            payer_secret_key: Hex-encoded secret key for paying transactions
+            network: Solana network (devnet, mainnet-beta, testnet)
         """
         if not SOLANA_AVAILABLE:
             raise ImportError("Solana SDK not installed. Install with: pip install solders solana spl-token")
 
-        self.rpc_url = rpc_url
-        self.client = Client(rpc_url)
+        self.network = network
+        self.rpc_url = _get_rpc_url(network, rpc_url)
+        self.client = Client(self.rpc_url)
 
         # Initialize payer keypair
         if payer_secret_key:
@@ -59,6 +96,11 @@ class SolanaAttestationClient:
         else:
             # For testing: generate ephemeral keypair
             self.payer = Keypair()
+
+        logger.info(
+            "Solana attestation client initialized: network=%s rpc=%s payer=%s",
+            network, self.rpc_url, str(self.payer.public_key)[:16] + "...",
+        )
 
     def attest_artifact(
         self,
@@ -87,8 +129,8 @@ class SolanaAttestationClient:
                 "round_id": round_id,
                 "num_participants": participants,
                 "model_version": model_version,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "chain": "solana-devnet",
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+                "chain": f"solana-{self.network}",
             }
 
             # Encode as JSON memo
@@ -103,7 +145,12 @@ class SolanaAttestationClient:
             tx_id = str(tx_sig)
 
             # Create explorer link
-            explorer_url = f"https://explorer.solana.com/tx/{tx_id}?cluster=devnet"
+            explorer_url = _get_explorer_url(tx_id, self.network)
+
+            logger.info(
+                "Artifact attested on Solana: round=%d tx=%s network=%s",
+                round_id, tx_id[:16] + "...", self.network,
+            )
 
             return {
                 "tx_id": tx_id,
@@ -116,7 +163,7 @@ class SolanaAttestationClient:
             }
 
         except Exception as e:
-            print(f"Error anchoring artifact on Solana: {e}")
+            logger.error("Error anchoring artifact on Solana: %s", e, exc_info=True)
             return None
 
     def verify_attestation(self, tx_id: str) -> Optional[Dict[str, Any]]:
@@ -146,21 +193,23 @@ class SolanaAttestationClient:
                 "tx_id": tx_id,
                 "slot": slot,
                 "status": "verified" if tx else "not_found",
-                "explorer_url": f"https://explorer.solana.com/tx/{tx_id}?cluster=devnet",
+                "explorer_url": _get_explorer_url(tx_id, self.network),
             }
 
         except Exception as e:
-            print(f"Error verifying attestation: {e}")
+            logger.error("Error verifying attestation: %s", e, exc_info=True)
             return None
 
     def get_explorer_url(self, tx_id: str) -> str:
         """Get Solana explorer URL for a transaction."""
-        return f"https://explorer.solana.com/tx/{tx_id}?cluster=devnet"
+        return _get_explorer_url(tx_id, self.network)
 
     def get_payer_address(self) -> str:
         """Get the payer's public key."""
         return str(self.payer.public_key)
 
+
+# ── Mock client (testing) ─────────────────────────────────────────────────────
 
 class MockSolanaAttestationClient:
     """
@@ -168,9 +217,15 @@ class MockSolanaAttestationClient:
     Simulates artifact attestation for development/CI.
     """
 
-    def __init__(self, rpc_url: str = "https://api.devnet.solana.com", payer_secret_key: Optional[str] = None):
+    def __init__(
+        self,
+        rpc_url: Optional[str] = None,
+        payer_secret_key: Optional[str] = None,
+        network: str = "devnet",
+    ):
         """Initialize mock client."""
-        self.rpc_url = rpc_url
+        self.network = network
+        self.rpc_url = _get_rpc_url(network, rpc_url)
         self.attestations: Dict[str, Dict[str, Any]] = {}
         self.payer_address = "FedNetTestPayer111111111111111111111111111"
 
@@ -186,7 +241,7 @@ class MockSolanaAttestationClient:
 
         attestation = {
             "tx_id": tx_id,
-            "explorer_url": f"https://explorer.solana.com/tx/{tx_id}?cluster=devnet",
+            "explorer_url": _get_explorer_url(tx_id, self.network),
             "artifact_hash": artifact_hash,
             "round_id": round_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -216,30 +271,37 @@ class MockSolanaAttestationClient:
 
     def get_explorer_url(self, tx_id: str) -> str:
         """Get explorer URL."""
-        return f"https://explorer.solana.com/tx/{tx_id}?cluster=devnet"
+        return _get_explorer_url(tx_id, self.network)
 
     def get_payer_address(self) -> str:
         """Get payer address."""
         return self.payer_address
 
 
+# ── Factory ───────────────────────────────────────────────────────────────────
+
 def create_solana_client(
     use_mock: bool = False,
-    rpc_url: str = "https://api.devnet.solana.com",
+    rpc_url: Optional[str] = None,
     payer_secret_key: Optional[str] = None,
+    network: Optional[str] = None,
 ) -> "SolanaAttestationClient":
     """
     Factory function to create a Solana attestation client.
 
     Args:
         use_mock: If True, uses mock client for testing
-        rpc_url: Solana RPC endpoint
+        rpc_url: Solana RPC endpoint (auto-derived from network if not set)
         payer_secret_key: Payer's secret key
+        network: Solana network (devnet, mainnet-beta). Defaults to SOLANA_NETWORK env var.
 
     Returns:
         SolanaAttestationClient or MockSolanaAttestationClient instance
     """
-    if use_mock:
-        return MockSolanaAttestationClient(rpc_url, payer_secret_key)
+    if network is None:
+        network = os.getenv("SOLANA_NETWORK", "devnet")
 
-    return SolanaAttestationClient(rpc_url, payer_secret_key)
+    if use_mock:
+        return MockSolanaAttestationClient(rpc_url, payer_secret_key, network)
+
+    return SolanaAttestationClient(rpc_url, payer_secret_key, network)

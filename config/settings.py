@@ -46,10 +46,49 @@ class Settings:
     aggregation_method: str = os.getenv("AGGREGATION_METHOD", "fedavg")  # fedavg, fedprox
     min_clients: int = int(os.getenv("MIN_CLIENTS", "2"))
     
-    # Blockchain settings
+    # Blockchain settings (Ethereum/local)
     blockchain_enabled: bool = os.getenv("BLOCKCHAIN_ENABLED", "true").lower() == "true"
     blockchain_network: str = os.getenv("BLOCKCHAIN_NETWORK", "ganache")  # ganache, sepolia
     contract_address: str = os.getenv("CONTRACT_ADDRESS", "")
+    
+    # Solana settings
+    solana_network: str = os.getenv("SOLANA_NETWORK", "devnet")  # devnet, mainnet-beta
+    solana_rpc_url: str = os.getenv("SOLANA_RPC_URL", "")  # auto-derived from network if empty
+    solana_wallet_path: str = os.getenv("SOLANA_WALLET_PATH", "")
+    usdc_mint_address: str = os.getenv("USDC_MINT_ADDRESS", "")
+    receiver_wallet: str = os.getenv("RECEIVER_WALLET", "")
+    query_price_usdc: str = os.getenv("QUERY_PRICE_USDC", "0.05")
+    
+    @property
+    def solana_rpc_endpoint(self) -> str:
+        """Get Solana RPC endpoint, auto-derived from network if not explicitly set."""
+        if self.solana_rpc_url:
+            return self.solana_rpc_url
+        rpc_urls = {
+            "devnet": "https://api.devnet.solana.com",
+            "mainnet-beta": "https://api.mainnet-beta.solana.com",
+            "testnet": "https://api.testnet.solana.com",
+        }
+        return rpc_urls.get(self.solana_network, rpc_urls["devnet"])
+    
+    @property
+    def solana_explorer_cluster(self) -> str:
+        """Get explorer cluster param. mainnet-beta uses no cluster param."""
+        if self.solana_network == "mainnet-beta":
+            return ""  # mainnet has no ?cluster= param
+        return f"?cluster={self.solana_network}"
+    
+    @property
+    def usdc_mint(self) -> str:
+        """Get USDC mint address for the current network."""
+        if self.usdc_mint_address:
+            return self.usdc_mint_address
+        # Well-known USDC mint addresses
+        mints = {
+            "mainnet-beta": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+            "devnet": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",  # devnet USDC
+        }
+        return mints.get(self.solana_network, mints["devnet"])
     
     # API settings
     api_host: str = os.getenv("API_HOST", "0.0.0.0")
