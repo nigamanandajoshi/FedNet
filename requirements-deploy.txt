@@ -1,10 +1,18 @@
-# FedNet — Production Dependencies (deployment)
-torch>=2.0.0
-torchvision>=0.15.0
-numpy>=1.24.0
-flask>=3.0.0
-flask-cors>=4.0.0
-gunicorn>=21.2.0
-python-dotenv>=1.0.0
-solders>=0.21.0
-solana>=0.32.0
+# FedNet — Production Dependencies (Render-optimized)
+# Core
+flask==3.0.0
+flask-cors==4.0.0
+gunicorn==21.2.0
+python-dotenv==1.0.0
+
+# Solana
+solana==0.32.0
+solders==0.21.0
+
+# Data processing (lightweight)
+numpy==1.24.0
+pandas==2.0.0
+
+# Testing & utilities
+pyyaml==6.0
+tqdm==4.66.0

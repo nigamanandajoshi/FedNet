@@ -28,22 +28,36 @@ logger.info("FedNet Dashboard loaded (WSGI mode)")
 # --- Inference server application (optional, separate process) ---
 def _create_inference_app():
     """Lazy-create inference app only when explicitly imported."""
-    import torch
-    import torch.nn as nn
+    try:
+        import torch
+        import torch.nn as nn
+        torch_available = True
+    except ImportError:
+        torch_available = False
+        logger.warning("PyTorch not available; using mock inference server")
+
     from decimal import Decimal
     from fednet.inference_server import X402InferenceServer
 
-    class DefaultModel(nn.Module):
-        """Placeholder model — replace with trained model in production."""
-        def __init__(self):
-            super().__init__()
-            self.fc1 = nn.Linear(8, 32)
-            self.fc2 = nn.Linear(32, 3)
+    if torch_available:
+        class DefaultModel(nn.Module):
+            """Placeholder model — replace with trained model in production."""
+            def __init__(self):
+                super().__init__()
+                self.fc1 = nn.Linear(8, 32)
+                self.fc2 = nn.Linear(32, 3)
 
-        def forward(self, x):
-            return self.fc2(torch.relu(self.fc1(x)))
+            def forward(self, x):
+                return self.fc2(torch.relu(self.fc1(x)))
 
-    model = DefaultModel()
+        model = DefaultModel()
+    else:
+        # Fallback: mock model for testing without torch
+        class MockModel:
+            def __call__(self, x):
+                return [0.1, 0.2, 0.3]
+        model = MockModel()
+
     price = Decimal(os.getenv("QUERY_PRICE_USDC", "0.05"))
 
     server = X402InferenceServer(
