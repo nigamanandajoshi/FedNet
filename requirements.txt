@@ -21,12 +21,6 @@ azure-storage-blob>=12.19.0
 flower>=1.5.0
 syft>=0.8.0
 
-# Blockchain
-web3>=6.11.0
-eth-hash>=0.5.2
-eth-utils>=2.3.0
-eth-account
-
 # API
 flask>=3.0.0
 flask-cors>=4.0.0

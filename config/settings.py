@@ -46,11 +46,6 @@ class Settings:
     aggregation_method: str = os.getenv("AGGREGATION_METHOD", "fedavg")  # fedavg, fedprox
     min_clients: int = int(os.getenv("MIN_CLIENTS", "2"))
     
-    # Blockchain settings (Ethereum/local)
-    blockchain_enabled: bool = os.getenv("BLOCKCHAIN_ENABLED", "true").lower() == "true"
-    blockchain_network: str = os.getenv("BLOCKCHAIN_NETWORK", "ganache")  # ganache, sepolia
-    contract_address: str = os.getenv("CONTRACT_ADDRESS", "")
-    
     # Solana settings
     solana_network: str = os.getenv("SOLANA_NETWORK", "devnet")  # devnet, mainnet-beta
     solana_rpc_url: str = os.getenv("SOLANA_RPC_URL", "")  # auto-derived from network if empty
