@@ -72,12 +72,12 @@ git clone https://github.com/nigamanandajoshi/FedNet.git
 cd FedNet
 
 # Set up environment
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Run the complete 3-layer demo
-python test_fednet_complete.py
+python3 test_fednet_complete.py
 ```
 
 **Expected output:**
@@ -91,13 +91,13 @@ For a hands-on walkthrough, see the [Quick Start Guide](QUICKSTART.md). For the 
 
 ```bash
 # Layer 1 only — Audit Artifacts
-python test_fednet_layer1.py
+python3 test_fednet_layer1.py
 
 # Layers 1 & 2 — Audit + Solana Attestation
-python test_fednet_layer1_layer2.py
+python3 test_fednet_layer1_layer2.py
 
 # All 3 Layers — Complete system
-python test_fednet_complete.py
+python3 test_fednet_complete.py
 
 # Launch monitoring dashboard
 python -c "from fednet.dashboard_server import create_dashboard; create_dashboard(port=5001).run()"

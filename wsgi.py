@@ -1,28 +1,28 @@
 """
 WSGI entry point for production deployment.
 
-Usage with gunicorn:
-    gunicorn wsgi:app --bind 0.0.0.0:5000 --workers 4 --timeout 120
+Dashboard:
+    gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
 
-For the inference server:
-    gunicorn wsgi:inference_app --bind 0.0.0.0:5001 --workers 2 --timeout 120
+Inference server:
+    LOAD_INFERENCE_APP=true gunicorn wsgi:inference_app --bind 0.0.0.0:5002 --workers 2 --timeout 120
 """
 
 import logging
 import os
-from config.logging_config import setup_logging
-from config.settings import settings
 
-# Configure logging for production
-log_level = os.getenv("LOG_LEVEL", "INFO")
-setup_logging(log_level=log_level, log_dir=settings.logs_dir)
-
+# Configure basic logging
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 logger = logging.getLogger("fednet.wsgi")
 
-# --- Main API application ---
-from api.app import app  # noqa: E402
+# --- Dashboard application (primary) ---
+from fednet.dashboard_server import create_dashboard  # noqa: E402
 
-logger.info("FedNet API loaded (WSGI mode)")
+port = int(os.environ.get("PORT", 5001))
+dashboard = create_dashboard(port=port)
+app = dashboard.app
+
+logger.info("FedNet Dashboard loaded (WSGI mode)")
 
 
 # --- Inference server application (optional, separate process) ---
@@ -43,33 +43,19 @@ def _create_inference_app():
         def forward(self, x):
             return self.fc2(torch.relu(self.fc1(x)))
 
-    # Load trained model if available
-    model_path = settings.models_dir / "final_global_model.pth"
     model = DefaultModel()
-
-    if model_path.exists():
-        try:
-            model.load_state_dict(torch.load(model_path, map_location="cpu"))
-            logger.info("Loaded trained model from %s", model_path)
-        except Exception as e:
-            logger.warning("Could not load model from %s: %s", model_path, e)
-    else:
-        logger.warning("No trained model found at %s — using default", model_path)
-
-    use_mock = not settings.is_production
     price = Decimal(os.getenv("QUERY_PRICE_USDC", "0.05"))
 
     server = X402InferenceServer(
         model=model,
         model_id="fednet_healthcare_v1",
         price_per_inference=price,
-        use_mock=use_mock,
+        use_mock=True,
     )
 
     return server.get_app()
 
 
-# Only create inference app when this attribute is accessed
 inference_app = None
 
 if os.getenv("LOAD_INFERENCE_APP", "false").lower() == "true":

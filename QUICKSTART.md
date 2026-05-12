@@ -15,7 +15,7 @@ git clone https://github.com/nigamanandajoshi/FedNet.git
 cd FedNet
 
 # Create and activate virtual environment
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
 
 # Install dependencies
@@ -27,7 +27,7 @@ pip install -r requirements.txt
 ### Option 1: Test All Three Layers (Recommended)
 
 ```bash
-python test_fednet_complete.py
+python3 test_fednet_complete.py
 ```
 
 This runs:
@@ -44,7 +44,7 @@ This runs:
 ### Option 2: Layer 1 Only (Audit Artifacts)
 
 ```bash
-python test_fednet_layer1.py
+python3 test_fednet_layer1.py
 ```
 
 Demonstrates compliance artifact generation and verification.
@@ -52,7 +52,7 @@ Demonstrates compliance artifact generation and verification.
 ### Option 3: Layers 1 & 2 (Audit + Solana)
 
 ```bash
-python test_fednet_layer1_layer2.py
+python3 test_fednet_layer1_layer2.py
 ```
 
 Shows artifacts being anchored on Solana.
@@ -128,9 +128,9 @@ POST /inference
 
 | Task | Command |
 |------|---------|
-| Run complete system | `python test_fednet_complete.py` |
-| Run Layer 1 only | `python test_fednet_layer1.py` |
-| Run Layers 1+2 | `python test_fednet_layer1_layer2.py` |
+| Run complete system | `python3 test_fednet_complete.py` |
+| Run Layer 1 only | `python3 test_fednet_layer1.py` |
+| Run Layers 1+2 | `python3 test_fednet_layer1_layer2.py` |
 | Run all tests | `pytest tests/ -v` |
 | Launch dashboard | `python -c "from fednet.dashboard_server import create_dashboard; create_dashboard().run()"` |
 | View documentation | `cat FEDNET.md` |
@@ -201,7 +201,7 @@ Make sure you're in the project root and have activated the virtual environment:
 ```bash
 cd FedNet
 source venv/bin/activate
-python test_fednet_complete.py
+python3 test_fednet_complete.py
 ```
 
 ### Error: `ImportError: No module named 'torch'`
@@ -224,7 +224,7 @@ pytest tests/ -v
 ## Next Steps
 
 1. **Understand the Architecture**: Read `FEDNET.md`
-2. **Run Complete Demo**: `python test_fednet_complete.py`
+2. **Run Complete Demo**: `python3 test_fednet_complete.py`
 3. **Explore the Code**:
    - `fednet/audit_artifacts.py` — How compliance artifacts are created
    - `fednet/solana_attestation.py` — How artifacts get on-chain
@@ -280,4 +280,4 @@ See `FEDNET.md` for:
 
 ---
 
-**Ready to go?** Run: `python test_fednet_complete.py`
+**Ready to go?** Run: `python3 test_fednet_complete.py`

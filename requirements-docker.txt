@@ -1,0 +1,21 @@
+# FedNet — Minimal dependencies for Docker/docker-compose
+#
+# This is intentionally smaller than `requirements.txt` (which includes training,
+# Azure ML, notebooks, etc.). Use this for quick, reliable container builds.
+
+torch>=2.0.0
+torchvision>=0.15.0
+numpy>=1.24.0
+
+flask>=3.0.0
+flask-cors>=4.0.0
+gunicorn>=21.2.0
+python-dotenv>=1.0.0
+
+# Layer 2 (Solana)
+solders>=0.21.0
+solana>=0.32.0
+
+# API schemas (used by `api/models.py`)
+pydantic>=2.4.0
+

@@ -49,6 +49,15 @@ class FedNetDashboard:
                 return tpl.read_text()
             return "<h1>FedNet</h1><p>Template not found</p>", 500
 
+        @self.app.route("/health", methods=["GET"])
+        def health():
+            """Health check endpoint for load balancers."""
+            return jsonify({
+                "status": "healthy",
+                "service": "fednet-dashboard",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }), 200
+
         # ── Dashboard Stats ──────────────────────────────────────────
 
         @self.app.route("/api/stats", methods=["GET"])

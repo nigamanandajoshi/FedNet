@@ -159,7 +159,7 @@ The vetting identified six overlapping projects: dezi-network, pearl-protocol, o
 ```bash
 git clone https://github.com/nigamanandajoshi/FedNet.git
 cd FedNet
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
@@ -167,7 +167,7 @@ pip install -r requirements.txt
 ### Run Layer 1 Only (Audit Artifacts)
 
 ```bash
-python test_fednet_layer1.py
+python3 test_fednet_layer1.py
 ```
 
 Generates and verifies 2 training rounds worth of signed compliance artifacts.
@@ -175,7 +175,7 @@ Generates and verifies 2 training rounds worth of signed compliance artifacts.
 ### Run Layers 1 & 2 (Audit + Solana Attestation)
 
 ```bash
-python test_fednet_layer1_layer2.py
+python3 test_fednet_layer1_layer2.py
 ```
 
 Demonstrates artifact generation + on-chain anchoring.
@@ -183,7 +183,7 @@ Demonstrates artifact generation + on-chain anchoring.
 ### Run All Three Layers (Complete System)
 
 ```bash
-python test_fednet_complete.py
+python3 test_fednet_complete.py
 ```
 
 Full end-to-end: FL training → audit artifacts → Solana attestation → inference monetization.
@@ -296,7 +296,7 @@ artifacts/                       # Generated compliance artifacts
 ### Development
 
 ```bash
-python test_fednet_complete.py
+python3 test_fednet_complete.py
 python -c "from fednet.dashboard_server import create_dashboard; create_dashboard(port=5001).run(debug=True)"
 ```
 
@@ -390,4 +390,3 @@ If you build on FedNet, please cite:
 - [Solana State Compression](https://docs.solana.com/developing/guides/compressed-nfts)
 - [x402 HTTP Payment Protocol](https://http.payments.community/)
 - [Federated Learning Security (NIST)](https://csrc.nist.gov/)
-
