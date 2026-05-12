@@ -138,7 +138,7 @@ class FedNetDashboard:
         try:
             self._log("Initializing FedNet layers...")
             self.artifacts_dir.mkdir(exist_ok=True)
-            gen = create_artifact_generator("fednet-dashboard")
+            gen = create_artifact_generator("fednet-system-test")
             sol = create_solana_client(use_mock=True)
             model = MiniModel()
             weights = model.state_dict()
