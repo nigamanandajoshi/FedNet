@@ -3,151 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FedNet Dashboard</title>
+<title>FedNet — Governance Dashboard</title>
+<meta name="description" content="FedNet: Governance, Auditability & Monetization for Federated Learning">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#06080f;--surface:#0d1117;--card:#111820;--card-hover:#151d27;
-  --border:rgba(255,255,255,.06);--text:#e6edf3;--text-muted:#8b949e;
-  --accent:#7c5cfc;--accent2:#00d4aa;--accent3:#f97316;
-  --glow:rgba(124,92,252,.15);--glow2:rgba(0,212,170,.12);
-}
-body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;overflow-x:hidden}
-/* Sidebar */
-.sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:10;transition:transform .3s}
-.sidebar-brand{padding:24px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
-.brand-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;box-shadow:0 0 20px var(--glow)}
-.brand-name{font-size:18px;font-weight:700;background:linear-gradient(135deg,#fff,var(--text-muted));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.brand-tag{font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
-.nav{flex:1;padding:12px 10px}
-.nav-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;color:var(--text-muted);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;margin-bottom:2px;text-decoration:none;position:relative;overflow:hidden}
-.nav-item:hover{background:rgba(255,255,255,.04);color:var(--text)}
-.nav-item.active{background:linear-gradient(135deg,rgba(124,92,252,.15),rgba(0,212,170,.08));color:#fff;font-weight:600}
-.nav-item.active::before{content:'';position:absolute;left:0;top:15%;bottom:15%;width:3px;border-radius:0 3px 3px 0;background:linear-gradient(180deg,var(--accent),var(--accent2))}
-.nav-icon{width:18px;height:18px;opacity:.7;flex-shrink:0}
-.nav-item.active .nav-icon{opacity:1}
-.nav-section{padding:16px 14px 6px;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:600}
-.sidebar-footer{padding:16px 14px;border-top:1px solid var(--border)}
-.status-pill{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--accent2)}
-.status-dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);box-shadow:0 0 8px var(--accent2);animation:pulse-dot 2s infinite}
-@keyframes pulse-dot{0%,100%{opacity:1;box-shadow:0 0 8px var(--accent2)}50%{opacity:.6;box-shadow:0 0 16px var(--accent2)}}
-/* Main */
-.main{margin-left:240px;flex:1;min-height:100vh;position:relative}
-.main::before{content:'';position:fixed;top:-50%;right:-30%;width:80%;height:80%;background:radial-gradient(circle,rgba(124,92,252,.04) 0%,transparent 60%);pointer-events:none;z-index:0}
-.topbar{display:flex;justify-content:space-between;align-items:center;padding:20px 32px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(6,8,15,.85);backdrop-filter:blur(20px);z-index:5}
-.topbar h1{font-size:20px;font-weight:700}
-.topbar-actions{display:flex;gap:10px;align-items:center}
-.btn{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;transition:all .2s;font-family:inherit;display:flex;align-items:center;gap:6px}
-.btn-ghost{background:rgba(255,255,255,.05);color:var(--text-muted);border:1px solid var(--border)}
-.btn-ghost:hover{background:rgba(255,255,255,.08);color:var(--text)}
-.btn-primary{background:linear-gradient(135deg,var(--accent),#9f7afe);color:#fff;box-shadow:0 0 20px var(--glow)}
-.btn-primary:hover{box-shadow:0 0 30px rgba(124,92,252,.3);transform:translateY(-1px)}
-.content{padding:24px 32px;position:relative;z-index:1}
-/* Metric Cards */
-.metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
-.metric-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;position:relative;overflow:hidden;transition:all .3s}
-.metric-card:hover{border-color:rgba(124,92,252,.2);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3)}
-.metric-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:16px 16px 0 0}
-.metric-card:nth-child(1)::after{background:linear-gradient(90deg,var(--accent),#9f7afe)}
-.metric-card:nth-child(2)::after{background:linear-gradient(90deg,var(--accent2),#34d399)}
-.metric-card:nth-child(3)::after{background:linear-gradient(90deg,var(--accent3),#fb923c)}
-.metric-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
-.metric-label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:600}
-.metric-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px}
-.metric-card:nth-child(1) .metric-icon{background:rgba(124,92,252,.12);color:var(--accent)}
-.metric-card:nth-child(2) .metric-icon{background:rgba(0,212,170,.12);color:var(--accent2)}
-.metric-card:nth-child(3) .metric-icon{background:rgba(249,115,22,.12);color:var(--accent3)}
-.metric-value{font-size:36px;font-weight:800;line-height:1;margin-bottom:6px;font-variant-numeric:tabular-nums}
-.metric-card:nth-child(1) .metric-value{background:linear-gradient(135deg,#fff,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.metric-card:nth-child(2) .metric-value{background:linear-gradient(135deg,#fff,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.metric-card:nth-child(3) .metric-value{background:linear-gradient(135deg,#fff,var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.metric-sub{font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px}
-.metric-badge{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
-.badge-up{background:rgba(0,212,170,.12);color:var(--accent2)}
-.badge-info{background:rgba(124,92,252,.12);color:var(--accent)}
-/* Panels */
-.panels{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
-.panel{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
-.panel-header{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--border)}
-.panel-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
-.panel-body{padding:16px 20px}
-/* Activity Feed */
-.activity-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);transition:background .2s}
-.activity-item:last-child{border-bottom:none}
-.activity-item:hover{background:rgba(255,255,255,.02);margin:0 -20px;padding:12px 20px}
-.activity-dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0}
-.activity-dot.purple{background:var(--accent);box-shadow:0 0 8px var(--glow)}
-.activity-dot.green{background:var(--accent2);box-shadow:0 0 8px var(--glow2)}
-.activity-dot.orange{background:var(--accent3);box-shadow:0 0 8px rgba(249,115,22,.3)}
-.activity-text{font-size:13px;line-height:1.5}
-.activity-text strong{color:var(--text);font-weight:600}
-.activity-time{font-size:11px;color:var(--text-muted);margin-top:2px}
-.activity-text span{color:var(--text-muted)}
-/* Chart */
-.chart-container{position:relative;height:200px}
-canvas{width:100%!important;height:100%!important}
-/* Table */
-.data-table{width:100%;border-collapse:collapse}
-.data-table th{text-align:left;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:600;padding:10px 12px;border-bottom:1px solid var(--border)}
-.data-table td{padding:12px;font-size:13px;border-bottom:1px solid var(--border)}
-.data-table tr:hover td{background:rgba(255,255,255,.02)}
-.hash-text{font-family:'SF Mono',Menlo,monospace;font-size:11px;color:var(--accent);background:rgba(124,92,252,.08);padding:3px 8px;border-radius:6px;display:inline-block}
-.verified-badge{color:var(--accent2);font-size:12px;display:flex;align-items:center;gap:4px;font-weight:600}
-/* Full-width panel */
-.panel-full{grid-column:1/-1}
-/* Empty state */
-.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted)}
-.empty-icon{font-size:40px;margin-bottom:12px;opacity:.4}
-.empty-text{font-size:13px}
-/* Network badge */
-.network-badge{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:600;background:rgba(0,212,170,.08);color:var(--accent2);border:1px solid rgba(0,212,170,.15)}
-/* Animations */
-@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.animate-in{animation:fadeInUp .4s ease-out forwards;opacity:0}
-.animate-in:nth-child(1){animation-delay:.05s}
-.animate-in:nth-child(2){animation-delay:.1s}
-.animate-in:nth-child(3){animation-delay:.15s}
-@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-.skeleton{background:linear-gradient(90deg,var(--card) 25%,rgba(255,255,255,.04) 50%,var(--card) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px;height:20px}
-/* Responsive */
-@media(max-width:1024px){.metrics-grid{grid-template-columns:1fr}.panels{grid-template-columns:1fr}.sidebar{transform:translateX(-100%)}.main{margin-left:0}}
-</style>
+<link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-<!-- Sidebar -->
 <nav class="sidebar">
   <div class="sidebar-brand">
     <div class="brand-icon">FN</div>
-    <div>
-      <div class="brand-name">FedNet</div>
-      <div class="brand-tag">Governance Layer</div>
-    </div>
+    <div><div class="brand-name">FedNet</div><div class="brand-tag">Governance Layer</div></div>
   </div>
   <div class="nav">
     <div class="nav-section">Monitor</div>
-    <a class="nav-item active" href="#">
+    <a class="nav-item active" data-page="dashboard" href="#dashboard">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Dashboard
     </a>
-    <a class="nav-item" href="#">
+    <a class="nav-item" data-page="artifacts" href="#artifacts">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
       Audit Artifacts
     </a>
-    <a class="nav-item" href="#">
+    <a class="nav-item" data-page="solana" href="#solana">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
       Solana Proofs
     </a>
-    <a class="nav-item" href="#">
+    <a class="nav-item" data-page="monetization" href="#monetization">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
       Monetization
     </a>
     <div class="nav-section">System</div>
-    <a class="nav-item" href="#">
+    <a class="nav-item" data-page="analytics" href="#analytics">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
       Analytics
     </a>
-    <a class="nav-item" href="#">
+    <a class="nav-item" data-page="settings" href="#settings">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Settings
     </a>
@@ -157,209 +47,20 @@ canvas{width:100%!important;height:100%!important}
   </div>
 </nav>
 
-<!-- Main Content -->
 <main class="main">
   <div class="topbar">
-    <h1>Dashboard</h1>
+    <h1 id="page-title">Dashboard</h1>
     <div class="topbar-actions">
-      <div class="network-badge"><span class="status-dot" style="width:6px;height:6px"></span> <span id="network-label">Solana Devnet</span></div>
-      <button class="btn btn-ghost" onclick="loadStats()">↻ Refresh</button>
-      <button class="btn btn-primary" onclick="loadStats()">⚡ Live</button>
+      <div class="network-badge"><span class="status-dot" style="width:6px;height:6px"></span> Solana Devnet</div>
+      <button class="btn btn-green" onclick="App.triggerTraining()">🚀 Start Training</button>
+      <button class="btn btn-ghost" onclick="App.route()">↻ Refresh</button>
     </div>
   </div>
-
-  <div class="content" id="dashboard-content">
-    <!-- Skeleton loader -->
-    <div class="metrics-grid">
-      <div class="metric-card"><div class="skeleton" style="height:120px"></div></div>
-      <div class="metric-card"><div class="skeleton" style="height:120px"></div></div>
-      <div class="metric-card"><div class="skeleton" style="height:120px"></div></div>
-    </div>
+  <div class="content" id="page-content">
+    <div class="loading-state"><div class="skeleton" style="height:140px"></div></div>
   </div>
 </main>
 
-<script>
-async function loadStats(){
-  try{
-    const r=await fetch('/api/stats');
-    const d=await r.json();
-    render(d);
-  }catch(e){
-    document.getElementById('dashboard-content').innerHTML='<div style="text-align:center;padding:60px;color:var(--text-muted)"><p style="font-size:16px">⚠️ Unable to load dashboard data</p><p style="margin-top:8px;font-size:13px">'+e.message+'</p></div>';
-  }
-}
-
-function render(d){
-  const artifacts=d.artifacts||{};
-  const attestations=d.attestations||{};
-  const inferences=d.inferences||{};
-  const aList=artifacts.artifacts||[];
-  const iList=inferences.inferences||[];
-
-  document.getElementById('dashboard-content').innerHTML=`
-  <!-- Metric Cards -->
-  <div class="metrics-grid">
-    <div class="metric-card animate-in">
-      <div class="metric-header">
-        <div class="metric-label">Layer 1 · Audit Artifacts</div>
-        <div class="metric-icon">📋</div>
-      </div>
-      <div class="metric-value">${artifacts.total_rounds||0}</div>
-      <div class="metric-sub">Training Rounds <span class="metric-badge badge-info">HMAC-SHA256</span></div>
-    </div>
-    <div class="metric-card animate-in">
-      <div class="metric-header">
-        <div class="metric-label">Layer 2 · Solana Attestation</div>
-        <div class="metric-icon">⛓️</div>
-      </div>
-      <div class="metric-value">${attestations.total||0}</div>
-      <div class="metric-sub">On-Chain Proofs <span class="metric-badge badge-up">~$0.000005/tx</span></div>
-    </div>
-    <div class="metric-card animate-in">
-      <div class="metric-header">
-        <div class="metric-label">Layer 3 · x402 Monetization</div>
-        <div class="metric-icon">💎</div>
-      </div>
-      <div class="metric-value">$${inferences.total_revenue||'0'}</div>
-      <div class="metric-sub">${inferences.total_queries||0} queries <span class="metric-badge badge-up">USDC</span></div>
-    </div>
-  </div>
-
-  <!-- Panels -->
-  <div class="panels">
-    <!-- Activity Feed -->
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title">⚡ Recent Activity</div>
-        <span style="font-size:11px;color:var(--text-muted)">Live</span>
-      </div>
-      <div class="panel-body">
-        ${buildActivity(aList,attestations,inferences)}
-      </div>
-    </div>
-
-    <!-- Chart -->
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title">📊 Network Overview</div>
-        <span style="font-size:11px;color:var(--text-muted)">Last 7 days</span>
-      </div>
-      <div class="panel-body">
-        <div class="chart-container"><canvas id="chart"></canvas></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Artifacts Table -->
-  <div class="panels">
-    <div class="panel panel-full">
-      <div class="panel-header">
-        <div class="panel-title">📋 Compliance Artifacts</div>
-        <span style="font-size:11px;color:var(--text-muted)">${aList.length} records</span>
-      </div>
-      <div class="panel-body" style="padding:0">
-        ${aList.length>0?buildTable(aList):'<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No artifacts yet. Run <code style="background:rgba(124,92,252,.12);padding:2px 8px;border-radius:4px;color:var(--accent)">python test_fednet_complete.py</code> to generate.</div></div>'}
-      </div>
-    </div>
-  </div>
-  `;
-
-  drawChart();
-}
-
-function buildActivity(artifacts, attestations, inferences){
-  const items=[];
-  const attList=attestations.attestations||[];
-  const infList=inferences.inferences||[];
-  (artifacts||[]).forEach(a=>{
-    items.push({dot:'purple',html:`<strong>Round #${a.round}</strong> <span>— audit artifact generated</span>`,sub:`${a.participants} participants · ε=${a.dp_epsilon} · HMAC verified`});
-  });
-  attList.forEach(a=>{
-    const shortTx=(a.tx_id||'').substring(0,20)+'...';
-    items.push({dot:'green',html:`<strong>Attestation</strong> <span>— anchored on Solana</span>`,sub:`TX: ${shortTx} · Round ${a.round_id} · ${a.status}`});
-  });
-  infList.forEach(inf=>{
-    const shortPayer=(inf.payer||'').substring(0,20);
-    items.push({dot:'orange',html:`<strong>${inf.query}</strong>`,sub:`${shortPayer} · $${inf.amount} USDC`});
-  });
-  if(items.length===0){
-    return '<div class="empty-state"><div class="empty-icon">⚡</div><div class="empty-text">No activity yet. Run <code style="background:rgba(124,92,252,.12);padding:2px 8px;border-radius:4px;color:var(--accent)">python test_fednet_complete.py</code></div></div>';
-  }
-  return items.map(i=>`
-    <div class="activity-item">
-      <div class="activity-dot ${i.dot}"></div>
-      <div>
-        <div class="activity-text">${i.html}</div>
-        <div class="activity-time">${i.sub}</div>
-      </div>
-    </div>`).join('');
-}
-
-function buildTable(list){
-  return `<table class="data-table">
-    <thead><tr><th>Round</th><th>Timestamp</th><th>Participants</th><th>Gradient Hash</th><th>DP ε</th><th>Status</th></tr></thead>
-    <tbody>${list.map(a=>`<tr>
-      <td style="font-weight:600">#${a.round}</td>
-      <td style="color:var(--text-muted)">${new Date(a.timestamp).toLocaleString()}</td>
-      <td>${a.participants}</td>
-      <td><span class="hash-text">${a.gradient_hash}</span></td>
-      <td>${a.dp_epsilon}</td>
-      <td><span class="verified-badge">✓ Verified</span></td>
-    </tr>`).join('')}</tbody></table>`;
-}
-
-function drawChart(){
-  const c=document.getElementById('chart');
-  if(!c)return;
-  const ctx=c.getContext('2d');
-  const dpr=window.devicePixelRatio||1;
-  const rect=c.parentElement.getBoundingClientRect();
-  c.width=rect.width*dpr;c.height=rect.height*dpr;
-  c.style.width=rect.width+'px';c.style.height=rect.height+'px';
-  ctx.scale(dpr,dpr);
-  const w=rect.width,h=rect.height;
-  // Grid
-  ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=1;
-  for(let i=0;i<5;i++){const y=h*i/4;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
-  // Data lines
-  const pts1=generateWave(7,30,60);
-  const pts2=generateWave(7,20,50);
-  drawLine(ctx,pts1,w,h,'rgba(124,92,252,.8)','rgba(124,92,252,.08)');
-  drawLine(ctx,pts2,w,h,'rgba(0,212,170,.8)','rgba(0,212,170,.06)');
-  // Labels
-  ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='10px Inter';
-  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  days.forEach((d,i)=>{ctx.fillText(d,w*i/6-10,h-4)});
-  // Legend
-  ctx.fillStyle='rgba(124,92,252,.9)';ctx.fillRect(w-120,8,8,8);
-  ctx.fillStyle='rgba(255,255,255,.5)';ctx.fillText('Artifacts',w-108,16);
-  ctx.fillStyle='rgba(0,212,170,.9)';ctx.fillRect(w-120,24,8,8);
-  ctx.fillStyle='rgba(255,255,255,.5)';ctx.fillText('Attestations',w-108,32);
-}
-
-function generateWave(n,min,max){const a=[];for(let i=0;i<n;i++)a.push(min+Math.random()*(max-min));return a}
-
-function drawLine(ctx,pts,w,h,color,fill){
-  const max=Math.max(...pts)*1.2||1;
-  ctx.beginPath();
-  pts.forEach((p,i)=>{
-    const x=w*i/(pts.length-1),y=h-20-(p/max)*(h-40);
-    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-  });
-  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
-  // Fill
-  const last=pts.length-1;
-  ctx.lineTo(w*last/(pts.length-1),h-20);ctx.lineTo(0,h-20);ctx.closePath();
-  ctx.fillStyle=fill;ctx.fill();
-  // Dots
-  pts.forEach((p,i)=>{
-    const x=w*i/(pts.length-1),y=h-20-(p/max)*(h-40);
-    ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
-  });
-}
-
-loadStats();
-setInterval(loadStats,15000);
-</script>
+<script src="/static/app.js"></script>
 </body>
 </html>
