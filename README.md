@@ -125,7 +125,7 @@ pytest tests/test_inference_server.py -v     # Layer 3 inference
 | **Layer 2** | Solana SDK | On-chain attestation via state compression |
 | **Layer 3** | Flask, x402 | Payment-gated inference & revenue distribution |
 | **Dashboard** | Flask, HTML/JS | Real-time monitoring UI |
-| **Blockchain** | Ethereum (Hardhat) | Local ledger & smart contracts |
+
 | **Tests** | pytest | Automated quality assurance |
 
 ## Project Structure
@@ -148,12 +148,9 @@ FedNet/
 ├── models/                         # ML model architectures
 ├── training/                       # Local training logic
 ├── federated/                      # FL orchestration & aggregation
-├── blockchain/                     # Local blockchain ledger
-├── blockchain_eth/                 # Ethereum smart contracts (Hardhat)
 ├── data_loaders/                   # PyTorch dataset loaders
 ├── data_generation/                # Synthetic data generators
 ├── api/                            # Flask REST API
-├── dashboard/                      # Vite + React monitoring UI
 ├── scripts/                        # CLI utilities & deployment scripts
 ├── docs/                           # Extended documentation
 ├── notebooks/                      # Jupyter exploration notebooks
@@ -186,7 +183,7 @@ Six overlapping projects exist (dezi-network, pearl-protocol, obscura-1, compute
 | **HIPAA** | Data movement audit trail | Layer 1 compliance artifacts |
 | **GDPR** | Data processor accountability | Layer 2 on-chain attestation |
 | **Financial** | Model governance transparency | Audit artifacts + dashboard |
-| **Pharma (21 CFR Part 11)** | Electronic record integrity | Cryptographic signatures + blockchain |
+| **Pharma (21 CFR Part 11)** | Electronic record integrity | Cryptographic signatures + Solana attestation |
 
 ## Roadmap
 
