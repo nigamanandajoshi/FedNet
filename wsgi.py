@@ -10,24 +10,10 @@ Inference server:
 
 import logging
 import os
-from pathlib import Path
 
 # Configure basic logging
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 logger = logging.getLogger("fednet.wsgi")
-
-# Generate demo data on startup (if in production and no artifacts exist)
-if os.getenv("ENVIRONMENT") == "production":
-    artifacts_dir = Path("artifacts")
-    if not list(artifacts_dir.glob("*.json")):
-        try:
-            from generate_demo_data import generate_demo_artifacts
-            logger.info("Generating demo FedNet artifacts for dashboard...")
-            generate_demo_artifacts()
-        except Exception as e:
-            logger.warning(f"Could not generate demo artifacts: {e}")
-    else:
-        logger.info(f"Found {len(list(artifacts_dir.glob('*.json')))} existing artifacts")
 
 # --- Dashboard application (primary) ---
 from fednet.dashboard_server import create_dashboard  # noqa: E402
