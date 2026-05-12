@@ -216,6 +216,8 @@ def run_complete_fednet_system(num_rounds=2, num_participants=3):
     print("✓ Artifact Verification:")
     all_valid = True
     for artifact_file in sorted(artifacts_dir.glob("*.json")):
+        if artifact_file.name.startswith("_"):
+            continue
         loaded = artifact_gen.load_artifact(str(artifact_file))
         is_valid = artifact_gen.verify_artifact(loaded)
         status = "✓ VALID" if is_valid else "✗ INVALID"
@@ -258,7 +260,44 @@ def run_complete_fednet_system(num_rounds=2, num_participants=3):
     print(f"  - {inference_server.total_revenue} USDC collected")
     print(f"  - All artifacts verified and tamper-proof")
 
+    # Persist data for dashboard
+    _save_dashboard_data(attestation_records, inference_requests, inference_server)
+
     return all_valid and inference_server.inference_count == len(inference_requests)
+
+
+def _save_dashboard_data(attestation_records, inference_requests, inference_server):
+    """Persist attestation and inference data for the dashboard."""
+    data_dir = Path("artifacts")
+    data_dir.mkdir(exist_ok=True)
+
+    # Save attestation records
+    attestations_data = []
+    for a in attestation_records:
+        attestations_data.append({
+            "tx_id": a.get("tx_id", ""),
+            "explorer_url": a.get("explorer_url", ""),
+            "artifact_hash": a.get("artifact_hash", ""),
+            "round_id": a.get("round_id", 0),
+            "timestamp": a.get("timestamp", ""),
+            "status": a.get("status", "confirmed"),
+        })
+
+    with open(data_dir / "_attestations.json", "w") as f:
+        json.dump(attestations_data, f, indent=2)
+
+    # Save inference records
+    inferences_data = []
+    for r in inference_requests:
+        inferences_data.append({
+            "query": r.get("query", ""),
+            "payer": r.get("payer", ""),
+            "amount": str(r.get("amount", "0")),
+            "result": r.get("result", []),
+        })
+
+    with open(data_dir / "_inferences.json", "w") as f:
+        json.dump(inferences_data, f, indent=2)
 
 
 if __name__ == "__main__":

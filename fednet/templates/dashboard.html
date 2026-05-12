@@ -234,7 +234,7 @@ function render(d){
         <span style="font-size:11px;color:var(--text-muted)">Live</span>
       </div>
       <div class="panel-body">
-        ${buildActivity(aList,inferences)}
+        ${buildActivity(aList,attestations,inferences)}
       </div>
     </div>
 
@@ -267,16 +267,23 @@ function render(d){
   drawChart();
 }
 
-function buildActivity(artifacts,inferences){
+function buildActivity(artifacts, attestations, inferences){
   const items=[];
+  const attList=attestations.attestations||[];
+  const infList=inferences.inferences||[];
   (artifacts||[]).forEach(a=>{
-    items.push({dot:'purple',html:`<strong>Round #${a.round}</strong> <span>— audit artifact generated</span>`,sub:`${a.participants} participants · ε=${a.dp_epsilon}`,time:a.timestamp});
+    items.push({dot:'purple',html:`<strong>Round #${a.round}</strong> <span>— audit artifact generated</span>`,sub:`${a.participants} participants · ε=${a.dp_epsilon} · HMAC verified`});
   });
-  if(inferences.total_queries>0){
-    items.push({dot:'orange',html:`<strong>${inferences.total_queries} inferences</strong> <span>processed</span>`,sub:`Revenue: $${inferences.total_revenue} USDC`,time:''});
-  }
+  attList.forEach(a=>{
+    const shortTx=(a.tx_id||'').substring(0,20)+'...';
+    items.push({dot:'green',html:`<strong>Attestation</strong> <span>— anchored on Solana</span>`,sub:`TX: ${shortTx} · Round ${a.round_id} · ${a.status}`});
+  });
+  infList.forEach(inf=>{
+    const shortPayer=(inf.payer||'').substring(0,20);
+    items.push({dot:'orange',html:`<strong>${inf.query}</strong>`,sub:`${shortPayer} · $${inf.amount} USDC`});
+  });
   if(items.length===0){
-    return '<div class="empty-state"><div class="empty-icon">⚡</div><div class="empty-text">No activity yet</div></div>';
+    return '<div class="empty-state"><div class="empty-icon">⚡</div><div class="empty-text">No activity yet. Run <code style="background:rgba(124,92,252,.12);padding:2px 8px;border-radius:4px;color:var(--accent)">python test_fednet_complete.py</code></div></div>';
   }
   return items.map(i=>`
     <div class="activity-item">

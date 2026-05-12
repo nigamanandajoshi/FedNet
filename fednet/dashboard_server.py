@@ -76,6 +76,8 @@ class FedNetDashboard:
 
         if self.artifacts_dir.exists():
             for artifact_file in sorted(self.artifacts_dir.glob("*.json")):
+                if artifact_file.name.startswith("_"):
+                    continue  # Skip metadata files (_attestations.json, etc.)
                 with open(artifact_file, "r") as f:
                     data = json.load(f)
 
@@ -92,15 +94,25 @@ class FedNetDashboard:
         return artifacts
 
     def _get_attestations(self) -> list:
-        """Get attestation records."""
-        # Would read from actual Solana records in production
-        # For now, return example structure
+        """Get attestation records from persisted data."""
+        attestations_file = self.artifacts_dir / "_attestations.json"
+        if attestations_file.exists():
+            try:
+                with open(attestations_file, "r") as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, IOError) as e:
+                logger.warning("Failed to read attestations: %s", e)
         return []
 
     def _get_inferences(self) -> list:
-        """Get inference query records."""
-        # Would read from actual payment ledger in production
-        # For now, return example structure
+        """Get inference query records from persisted data."""
+        inferences_file = self.artifacts_dir / "_inferences.json"
+        if inferences_file.exists():
+            try:
+                with open(inferences_file, "r") as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, IOError) as e:
+                logger.warning("Failed to read inferences: %s", e)
         return []
 
     def run(self, debug: bool = False):
